@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <style>
+        /* general style */
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        .container {
+            text-align: center;
+        }
+        
+        .canvasContainer {
+            position: relative;
+            display: flex;
+            width: 1200px;
+            margin: 0 auto;
+        }
+        
+        canvas {
+            background-color: #F5F5FF;
+            display: block;
+        }
+        
+        .Yaxis {
+            position: absolute;
+            left: 100px;
+            height: 500px;
+            border-left: 2px solid black;
+        }
+        
+        .Xaxis {
+            position: absolute;
+            top: 400px;
+            width: 1200px;
+            border-top: 2px solid black;
+        }
+        
+        .actions button {
+            padding: 12px 24px;
+            font-weight: 400;
+            font-size: 16px;
+            border: none;
+            color: white;
+        }
+        
+        .actions button:first-child {
+            background-color: #28A745;
+        }
+        
+        .actions button:nth-child(2) {
+            background-color: #106CCF;
+        }
+        
+        .actions button:hover {
+            transform: scale(1.01);
+        }
+        
+        .actions button:focus {
+            border: 1px solid black;
+        }
+        
+        .entries div {
+            margin-bottom: 6px;
+        }
+        /* range input style */
+        
+        input[type='range'] {
+            overflow: hidden;
+            -webkit-appearance: none;
+            background-color: #F5F5FF;
+        }
+        
+        input[type='range']::-webkit-slider-runnable-track {
+            height: 10px;
+            -webkit-appearance: none;
+        }
+        
+        input[type='range']::-webkit-slider-thumb {
+            width: 10px;
+            height: 10px;
+            -webkit-appearance: none;
+            cursor: pointer;
+            background: black;
+            box-shadow: -80px 0 0 80px #106CCF;
+        }
+        /* shared styles */
+        
+        input[type='range'],
+        .actions button:hover {
+            cursor: pointer;
+        }
+        
+        .actions button,
+        h1 {
+            text-transform: capitalize;
+        }
+        
+        input[type='range']:focus,
+        .actions button:focus {
+            outline: none;
+        }
+        
+        .actions,
+        .entries,
+        h1 {
+            margin: 24px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>projectile motion simulation</h1>
+
+        <!-- space to draw movement -->
+        <div class="canvasContainer">
+            <div class="Yaxis"></div>
+            <div class="Xaxis"></div>
+            <canvas id="myCanvas" height="500" width="1200"></canvas>
+        </div>
+
+        <!-- data reqiured to calculate (x,y) coorinates at each point -->
+        <div class="entries">
+            <div>
+                <span>velocity</span>
+                <input type="range" min="20" max="90" value="30" id="velocity">
+                <span id="velocityVal">30</span>
+            </div>
+            <div>
+                <span>angle</span>
+                <input type="range" min="0" max="90" value="10" id="angle">
+                <span id="angleVal">10</span>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button id="start">start</button>
+            <button id="reset">reset</button>
+        </div>
+    </div>
+
+    <script>
+        // Declaration & Initialization of required variables
+
+        let canvas = document.getElementById("myCanvas");
+        let ctx = canvas.getContext("2d");
+
+        let canvasWidth = canvas.width;
+        let canvasHeight = canvas.height;
+
+        let startPointX = 102;
+        let startPointY = canvasHeight - 102;
+
+
+        let velocityInput = document.getElementById('velocity');
+        let angleInput = document.getElementById('angle');
+
+        let velocityInitialVal = velocityInput.getAttribute('value');
+        let angleInitialVal = angleInput.getAttribute('value');
+
+        let velocityVal = document.getElementById('velocityVal');
+        let angleVal = document.getElementById('angleVal');
+
+        let gravity = 9.8;
+        let t = 0;
+
+        let velocity;
+        let angle;
+        let radian;
+
+        let isClicked = true;
+
+
+        velocityInput.addEventListener('change', function() {
+            velocityVal.innerHTML = this.value;
+        })
+
+        angleInput.addEventListener('change', function() {
+            angleVal.innerHTML = this.value;
+        })
+
+
+        document.getElementById('start').addEventListener('click', function() {
+            if (isClicked) {
+                gravity = 9.8;
+                velocity = velocityInput.value;
+                angle = angleInput.value;
+
+                // convert from degree to radian
+                radian = angle * Math.PI / 180
+
+                t = 0;
+                drawMovement();
+            }
+            isClicked = false;
+        })
+
+        document.getElementById('reset').addEventListener('click', function() {
+            reset();
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+            isClicked = true;
+        })
+
+
+        function drawMovement() {
+            requestAnimationFrame(drawMovement);
+
+            x = velocity * t * Math.cos(radian);
+            x += startPointX;
+            y = (velocity * t * Math.sin(radian)) - (0.5 * gravity * Math.pow(t, 2));
+            y = canvasHeight - y;
+            y -= 102;
+
+            drawCircle();
+
+            /* break condition of recursive function to stop drawing when line reach Xaxis */
+            if (y > startPointY) {
+                return;
+            }
+
+            // increase time by(.02) nuit to make a line
+            t += 0.02;
+        }
+
+        function drawCircle() {
+            ctx.beginPath();
+            ctx.arc(x, y, 2, 0, 2 * Math.PI);
+            ctx.fillStyle = "black";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function reset() {
+            t = 0;
+            velocity = 0;
+
+            velocityInput.value = velocityInitialVal
+            angleInput.value = angleInitialVal
+
+            velocityVal.innerHTML = velocityInitialVal
+            angleVal.innerHTML = angleInitialVal
+        }
+    </script>
+</body>
+
+</html>
